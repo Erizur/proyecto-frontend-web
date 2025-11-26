@@ -1,17 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { publicationService } from '../api/publication.service';
+import { userService } from '../api/user.service';
 import type { Publication, PublicationType } from '../types/publication.types';
 
 export interface UsePostsOptions {
     pubType?: PublicationType;
     userId?: number | null;
     onlyFollowing?: boolean;
+    onlySaved?: boolean;
     tagName?: string;
     sort?: string;
 }
 
 export function usePosts(options: UsePostsOptions = {}) {
-    const { pubType, userId, onlyFollowing, tagName, sort } = options;
+    const { pubType, userId, onlyFollowing, onlySaved, tagName, sort } = options;
     
     const [posts, setPosts] = useState<Publication[]>([]);
     const [loading, setLoading] = useState(true);
@@ -21,7 +23,8 @@ export function usePosts(options: UsePostsOptions = {}) {
     const currentPageRef = useRef(0);
 
     const fetchPosts = useCallback(async (pageNum: number, isNewFilter: boolean = false) => {
-        if (userId === null) {
+        // Si necesitamos userId pero es null (ej. perfil no cargado), esperamos
+        if (userId === null && !tagName && !onlySaved && !onlyFollowing) {
             setLoading(true);
             return;
         }
@@ -40,15 +43,17 @@ export function usePosts(options: UsePostsOptions = {}) {
                 params.sort = [sort];
             }
 
+            // Lógica de selección de endpoint
             if (tagName) {
                 response = await publicationService.getByTag(tagName, params);
+            } else if (onlySaved) {
+                // ✅ Lógica para Guardados
+                response = await userService.getSavedPosts(params);
+            } else if (onlyFollowing) {
+                response = await publicationService.getFeed(params);
             } else if (userId !== undefined) {
                 response = await publicationService.getByUserId(userId, params);
-            } else if (onlyFollowing) {
-                // ✅ AHORA SÍ: Usamos el endpoint de seguidos
-                response = await publicationService.getFeed(params);
             } else {
-                // Feed Global (Fallback)
                 response = await publicationService.getAll(params);
             }
 
@@ -67,15 +72,15 @@ export function usePosts(options: UsePostsOptions = {}) {
         } finally {
             setLoading(false);
         }
-    }, [pubType, userId, onlyFollowing, tagName, sort]);
+    }, [pubType, userId, onlyFollowing, onlySaved, tagName, sort]);
 
     useEffect(() => {
         currentPageRef.current = 0;
         fetchPosts(0, true);
-    }, [pubType, userId, onlyFollowing, tagName, sort, fetchPosts]); 
+    }, [pubType, userId, onlyFollowing, onlySaved, tagName, sort, fetchPosts]); 
 
     const loadMore = () => {
-        if (hasMore && !loading && userId !== null) {
+        if (hasMore && !loading) {
             const nextPage = currentPageRef.current + 1;
             fetchPosts(nextPage);
         }

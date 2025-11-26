@@ -18,7 +18,13 @@ export const formatDate = (dateString: string): string => {
 };
 
 export const formatNumber = (num: number): string => {
+    if (!num) return '0';
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
+};
+
+export const getUserName = (user: { displayName?: string | null; username: string } | null | undefined): string => {
+    if (!user) return 'Usuario Desconocido';
+    return user.displayName && user.displayName.trim() !== "" ? user.displayName : user.username;
 };

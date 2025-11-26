@@ -21,7 +21,6 @@ export default function Notifications() {
                 </button>
             </div>
 
-            {/* Añadimos safe check notifications?.length por si acaso */}
             {!notifications || notifications.length === 0 ? (
                 <EmptyState message="No tienes notificaciones recientes" />
             ) : (

@@ -10,12 +10,13 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorMessage from '../components/common/ErrorMessage';
 import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileTabs from '../components/profile/ProfileTabs';
-import PostCard from '../components/post/PostCard';
+import ProfileArtworks from '../components/profile/ProfileArtworks';
 import EmptyState from '../components/common/EmptyStateProps';
 
 export default function Profile() {
     const { username } = useParams<{ username: string }>();
-    const { user: currentUser } = useAuth();
+    const { userId: currentUserIdStr } = useAuth(); 
+    const currentUserId = currentUserIdStr ? Number(currentUserIdStr) : null;
     
     const [profileData, setProfileData] = useState<UserDetails | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
@@ -24,14 +25,16 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState<'ART' | 'COMMUNITY' | 'LIKED'>('ART');
 
     const isOwnProfile = Boolean(
-        currentUser && 
+        currentUserId !== null && 
         profileData && 
-        Number(currentUser.userId) === profileData.userId
+        currentUserId === profileData.userId
     );
 
     const pubTypeFilter: PublicationType | undefined = 
         activeTab === 'COMMUNITY' ? 'TEXT' : 
         activeTab === 'ART' ? 'ILLUSTRATION' : undefined;
+
+    const showSaved = activeTab === 'LIKED';
 
     const { 
         posts, 
@@ -40,7 +43,8 @@ export default function Profile() {
         loadMore 
     } = usePosts({ 
         pubType: pubTypeFilter, 
-        userId: profileData?.userId ?? null 
+        userId: profileData?.userId ?? null,
+        onlySaved: showSaved 
     });
 
     useEffect(() => {
@@ -53,16 +57,9 @@ export default function Profile() {
         try {
             setLoadingProfile(true);
             setProfileError(null);
-            
-            // 1. Buscar ID por username (Público)
             const basicInfo = await userService.getByUsername(username!);
-            
-            // 2. Buscar DETALLES COMPLETOS por ID (Privado/Interno)
-            // Esto es necesario para obtener followersCount y followingCount
             const details = await userService.getById(basicInfo.userId);
-            
             setProfileData(details);
-
         } catch (err) {
             console.error(err);
             setProfileError('Usuario no encontrado');
@@ -79,7 +76,7 @@ export default function Profile() {
         <div className="max-w-4xl mx-auto py-6 px-4">
             <ProfileHeader 
                 profile={profileData} 
-                isOwnProfile={isOwnProfile} 
+                isOwnProfile={isOwnProfile}
                 followersCount={profileData.followersCount}
                 followingCount={profileData.followingCount}
             />
@@ -94,16 +91,11 @@ export default function Profile() {
                 {loadingPosts && posts.length === 0 ? (
                     <LoadingSpinner />
                 ) : posts.length > 0 ? (
-                    <div className="space-y-4">
-                        {posts.map((post) => (
-                            <PostCard
-                                key={post.id}
-                                post={post}
-                                onLike={() => {}}
-                                onReport={() => {}}
-                            />
-                        ))}
-                        
+                    <>
+                        <ProfileArtworks 
+                            publications={posts} 
+                            isOwnProfile={isOwnProfile} 
+                        />
                         {hasMore && (
                             <div className="flex justify-center mt-6">
                                 <button 
@@ -115,7 +107,7 @@ export default function Profile() {
                                 </button>
                             </div>
                         )}
-                    </div>
+                    </>
                 ) : (
                     <EmptyState 
                         message={

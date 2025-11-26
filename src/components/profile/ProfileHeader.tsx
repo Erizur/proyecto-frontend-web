@@ -67,7 +67,7 @@ export default function ProfileHeader({
 
     return (
         <div className="card lg:card-side bg-base-100 shadow-xl mb-6 border border-base-200">
-            <figure className="pt-6 lg:pl-6 lg:pt-0">
+            <figure className="pt-6 lg:pl-6">
                 <UserAvatar 
                     username={profile.username}
                     displayName={profile.displayName}

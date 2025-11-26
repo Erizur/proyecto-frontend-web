@@ -22,6 +22,7 @@ export interface IAuthContext {
     login: (u: string, p: string) => Promise<void>;
     logout: () => void;
     updateSession: (data: { username?: string, userEmail?: string, profilePictureUrl?: string }) => void;
+    loginWithToken: (token: string) => void;
 }
 
 export const AuthContext = createContext<IAuthContext>({
@@ -36,6 +37,7 @@ export const AuthContext = createContext<IAuthContext>({
     login: async () => { },
     logout: () => { },
     updateSession: () => { },
+    loginWithToken: () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -110,8 +112,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession("");
         localStorage.removeItem("token");
         localStorage.removeItem("expiresOn");
-        localStorage.removeItem("session"); // Aseguramos borrar session
+        localStorage.removeItem("session");
         setAuthData({ token: "", expiresOn: "" });
+    };
+
+    const loginWithToken = (token: string) => {
+        const expiresOn = (new Date().getTime() + 15 * 60 * 1000).toString();
+        updateAuthData(token, expiresOn);
     };
 
     const value = useMemo(() => {
@@ -121,7 +128,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const token = authData.token || "";
-        // ✅ CORRECCIÓN CLAVE: Si no hay token, el usuario NO está logueado, aunque haya sesión.
         const isLoggedIn = !!token; 
 
         return {
@@ -136,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             login,
             logout,
             updateSession,
+            loginWithToken,
         }
     }, [session, authData]);
 

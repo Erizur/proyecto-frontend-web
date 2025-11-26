@@ -3,7 +3,7 @@ export interface Author {
     username: string;
     displayName: string;
     role: string;
-    profilePictureUrl?: string; // ✅ Añadido
+    profilePictureUrl?: string;
 }
 
 export interface ImageResponse {
@@ -30,6 +30,12 @@ export interface Publication {
     id: number;
     description: string;
     author: Author;
+
+    heartsCount: number;
+    commentsCount: number;
+    likedByMe: boolean; 
+    savedByMe: boolean;
+
     contentWarning: boolean;
     machineGenerated: boolean;
     manuallyVerified: boolean;

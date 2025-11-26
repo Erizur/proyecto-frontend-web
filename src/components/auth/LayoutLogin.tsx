@@ -6,7 +6,7 @@ export default function LayoutLogin() {
     return <div className="min-h-screen flex flex-col">
         <Navbar disableMenu={true} />
 
-        <div className="flex flex-1 mt-30">
+        <div className="flex flex-1">
             <div id="main-content" className="flex-1 p-6">
                 <Outlet />
             </div>

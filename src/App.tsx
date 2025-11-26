@@ -13,25 +13,35 @@ import Explore from "./pages/Explore";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Connections from "./pages/Connections";
+import OAuth2Redirect from "./components/auth/OAuth2Redirect";
+import ForgotPassword from "./components/auth/ForgotPassword";
+import ResetPassword from "./components/auth/ResetPassword";
+import MapPage from "./pages/MapPage";
 
 function App() {
   return <>
     <AuthProvider>
-      <Routes>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+      <Routes>
         <Route element={<LayoutLogin />}>
           <Route path="/auth/register" element={<Register />}></Route>
           <Route path="/auth/login" element={<Login />}></Route>
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+        </Route>
+
+        <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
+
+        <Route element={<Layout />}>
+            <Route path="/post/:id" element={<PostDetail />} />
+            <Route path="/profile/:username" element={<Profile />} />
+            <Route path="/profile/:username/:type" element={<Connections />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />} >
             <Route path="/" element={<Home />} />
-            <Route path="/profile/:username" element={<Profile />} />
-            
-            <Route path="/profile/:username/:type" element={<Connections />} />
-            
-            <Route path="/post/:id" element={<PostDetail />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/map" element={<MapPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/auth/logout" element={<Logout />}></Route>

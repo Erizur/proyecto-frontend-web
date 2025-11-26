@@ -8,11 +8,10 @@ interface CompactPostCardProps {
 }
 
 export default function CompactPostCard({ post, className = "" }: CompactPostCardProps) {
-    // ✅ PROTECCIÓN
     if (!post || !post.author) return null;
 
     return (
-        <div className={`relative rounded-xl overflow-hidden shadow-md group bg-base-200 ${className}`}>
+        <div className={`relative rounded-md overflow-hidden shadow-sm border border-base-300 group bg-base-200 ${className}`}>
             <Link to={`/post/${post.id}`} className="block w-full h-full">
                 {post.images && post.images.length > 0 ? (
                     <img 
@@ -21,15 +20,16 @@ export default function CompactPostCard({ post, className = "" }: CompactPostCar
                         alt={post.description} 
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center p-6 text-center">
-                        <p className="text-xs line-clamp-6 font-medium opacity-70">
+                    <div className="w-full h-full flex items-center justify-center p-6 text-center bg-base-100">
+                        <p className="text-xs line-clamp-6 font-medium opacity-70 font-serif italic">
                             "{post.description}"
                         </p>
                     </div>
                 )}
                 
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 text-white">
-                    <div className="flex items-center gap-2">
+                {/* Overlay más sutil */}
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="flex items-center gap-2 translate-y-2 group-hover:translate-y-0 transition-transform duration-200">
                         <div className="shrink-0">
                             <UserAvatar 
                                 username={post.author.username}
@@ -40,8 +40,8 @@ export default function CompactPostCard({ post, className = "" }: CompactPostCar
                             />
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-xs font-bold truncate leading-tight">
-                                {post.author.displayName}
+                            <p className="text-xs font-bold truncate leading-tight text-white">
+                                {post.author.displayName || post.author.username}
                             </p>
                         </div>
                     </div>

@@ -9,7 +9,6 @@ interface PostActionsProps {
     onShare: () => void;
 }
 
-// ✅ Asegúrate que aquí diga PostActions y NO PostCard
 export default function PostActions({ 
     isLiked, 
     isSaved, 
