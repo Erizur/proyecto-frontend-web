@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { publicationService } from '../api/publication.service';
 import { userService } from '../api/user.service';
 import type { Publication, PublicationType } from '../types/publication.types';
+import type { AxiosError } from 'axios';
 
 export interface UsePostsOptions {
     pubType?: PublicationType;
@@ -43,7 +44,15 @@ export function usePosts(options: UsePostsOptions = {}) {
             }
 
             if (tagName) {
-                response = await publicationService.getByTag(tagName, params);
+                response = await publicationService.getByTag(tagName, params).catch((err: AxiosError) => {
+                    if (err.status == 404) {
+                        return {
+                            success: true,
+                            message: 'Empty data. El tag no existe',
+                            content: []
+                        };
+                    }
+                });
             } else if (onlySaved) {
                 response = await userService.getSavedPosts(params);
             } else if (onlyFollowing) {

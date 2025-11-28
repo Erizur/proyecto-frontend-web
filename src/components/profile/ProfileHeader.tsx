@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import UserAvatar from "../user/UserAvatar";
 import { userService } from "../../api/user.service";
 import { useAuth } from "../../hooks/useAuth"; 
-import type { UserDetails, PublicUser } from "../../types/user.types";
+import type { UserDetails, PublicUser, UserResponse } from "../../types/user.types";
 import type { Author } from "../../types/publication.types";
 
 interface ProfileHeaderProps {
     // Combinamos tipos para aceptar cualquiera, priorizando UserDetails
-    profile: UserDetails | PublicUser | Author;
+    profile: UserResponse | UserDetails | PublicUser | Author;
     isOwnProfile: boolean;
     followersCount?: number; 
     followingCount?: number;

@@ -13,7 +13,7 @@ interface AuthResponse {
 export interface IAuthContext {
     userId: string;
     username: string;
-    userEmail: string;
+    email: string;
     role: string;
     profilePictureUrl: string;
     token: string;
@@ -21,14 +21,14 @@ export interface IAuthContext {
     register: (u: string, e: string, p: string) => Promise<void>;
     login: (u: string, p: string) => Promise<void>;
     logout: () => void;
-    updateSession: (data: { username?: string, userEmail?: string, profilePictureUrl?: string }) => void;
+    updateSession: (data: { username?: string, email?: string, profilePictureUrl?: string }) => void;
     loginWithToken: (token: string) => void;
 }
 
 export const AuthContext = createContext<IAuthContext>({
     userId: "",
     username: "",
-    userEmail: "",
+    email: "",
     role: "",
     profilePictureUrl: "",
     token: "",
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
                 const sess = JSON.parse(session);
                 if (sess.userId && !sess.profilePictureUrl) {
-                    const userDetails = await userService.getById(sess.userId);
+                    const userDetails = await userService.getCurrent();
                     if (userDetails.profilePictureUrl) {
                         updateSession({ profilePictureUrl: userDetails.profilePictureUrl });
                     }
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(JSON.stringify({ 
             userId: data.userId, 
             username: username, 
-            userEmail: data.email,
+            email: data.email,
             role: data.role,
             profilePictureUrl: "" 
         }))
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(JSON.stringify({ 
             userId: data.userId, 
             username: username, 
-            userEmail: data.email,
+            email: data.email,
             role: data.role,
             profilePictureUrl: "" 
         }))
@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return {
             userId: isLoggedIn ? (sess?.userId || "") : "",
             username: isLoggedIn ? (sess?.username || "") : "",
-            userEmail: isLoggedIn ? (sess?.userEmail || "") : "",
+            email: isLoggedIn ? (sess?.userEmail || "") : "",
             role: isLoggedIn ? (sess?.role || "") : "",
             profilePictureUrl: isLoggedIn ? (sess?.profilePictureUrl || "") : "",
             token,

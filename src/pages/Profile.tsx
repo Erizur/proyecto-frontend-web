@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { userService } from '../api/user.service';
 import { useAuth } from '../hooks/useAuth';
 import { usePosts } from '../hooks/usePosts';
-import type { UserDetails } from '../types/user.types';
+import type { UserDetails, UserResponse } from '../types/user.types';
 import type { PublicationType } from '../types/publication.types';
 
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -18,7 +18,7 @@ export default function Profile() {
     const { userId: currentUserIdStr } = useAuth(); 
     const currentUserId = currentUserIdStr ? Number(currentUserIdStr) : null;
     
-    const [profileData, setProfileData] = useState<UserDetails | null>(null);
+    const [profileData, setProfileData] = useState<UserResponse | UserDetails | null>(null);
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [profileError, setProfileError] = useState<string | null>(null);
     

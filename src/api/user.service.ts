@@ -1,20 +1,23 @@
 import { apiClient } from './axios.config';
-import type { UserDetails, PublicUser, UpdateUserDto } from '../types/user.types';
+import type { UserDetails, PublicUser, UpdateUserDto, UserResponse } from '../types/user.types';
 import type { Pageable, PageResponse } from '../types/api.types';
 
-interface UserPageResponse extends PageResponse<PublicUser> {}
+type UserPageResponse = PageResponse<PublicUser>
 
 export const userService = {
-    // GET /user/{username} -> Info Pública (PublicUserDto)
     getByUsername: async (username: string) => {
         const response = await apiClient.get<PublicUser>(`/user/${username}`);
         return response.data;
     },
 
-    // GET /user/i/{id} -> Info Completa/Privada (UserDetailsDto)
-    // Este es el que usaremos para obtener contadores y detalles extra
+
     getById: async (id: number) => {
         const response = await apiClient.get<UserDetails>(`/user/i/${id}`);
+        return response.data;
+    },
+
+    getCurrent: async () => {
+        const response = await apiClient.get<UserResponse>(`/user/data/me`);
         return response.data;
     },
 
@@ -23,7 +26,7 @@ export const userService = {
         formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
         if (watermark) formData.append('watermark', watermark);
 
-        const response = await apiClient.patch<UserDetails>(`/user/${id}`, formData, {
+        const response = await apiClient.patch<UserResponse>(`/user/${id}`, formData, {
             headers: { 'Content-Type': null }
         });
         return response.data;
@@ -32,7 +35,7 @@ export const userService = {
     uploadAvatar: async (image: File) => {
         const formData = new FormData();
         formData.append('image', image);
-        const response = await apiClient.post<UserDetails>('/user/avatar', formData, {
+        const response = await apiClient.post<UserResponse>('/user/avatar', formData, {
             headers: { 'Content-Type': null }
         });
         return response.data;

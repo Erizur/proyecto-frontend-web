@@ -5,19 +5,23 @@ export interface PublicUser {
     username: string;
     displayName: string;
     role: string;
-    profilePictureUrl?: string; // Añadido según api-docs
+    profilePictureUrl?: string; 
 }
 
-// UserDetailsDto: Información completa con contadores
 export interface UserDetails extends PublicUser {
     description?: string;
-    followersCount: number; //
-    followingCount: number; //
+    followersCount: number;
+    followingCount: number;
+}
+
+export interface UserResponse extends UserDetails {
     email?: string;
     showExplicit?: boolean;
 }
 
 export interface UpdateUserDto {
+    username?: string;
+    displayName?: string;
     description?: string;
     email?: string;
     showExplicit?: boolean;

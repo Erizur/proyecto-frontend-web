@@ -22,7 +22,7 @@ export function useNotificationCount() {
         };
 
         fetchUnread();
-        const interval = setInterval(fetchUnread, 30000);
+        const interval = setInterval(fetchUnread, 300000);
         
         return () => clearInterval(interval);
     }, [userId]);

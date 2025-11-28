@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { CreatePublicationDto, PublicationType } from "../../types/publication.types";
+import { useAuth } from "../../hooks/useAuth";
+import { userService } from "../../api/user.service";
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -12,9 +14,12 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePos
     const [pubType, setPubType] = useState<PublicationType>('ILLUSTRATION');
     const [images, setImages] = useState<File[]>([]);
     
+    const { userId } = useAuth();
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
+
+    const [ canExplicit, setCanExplicit ] = useState(false);
     
     // Validaciones
     const [contentRating, setContentRating] = useState<'SAFE' | 'SENSITIVE' | null>(null);
@@ -25,7 +30,6 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePos
 
     useEffect(() => {
         if (!isOpen) {
-            // Reset al cerrar
             setTimeout(() => {
                 setStep('TYPE_SELECT');
                 setImages([]);
@@ -35,15 +39,30 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePos
                 setMachineGenerated(false);
                 setPubType('ILLUSTRATION');
             }, 300);
+        } else {
+            const fetchProfile = async () => {
+                setLoading(true);
+                try {
+                    const profile = await userService.getById(Number(userId));
+                    if (profile.showExplicit === true) {
+                        setCanExplicit(true);
+                    }
+                } catch (error) {
+                    console.error("Error obteniendo perfil:", error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchProfile();
         }
     }, [isOpen]);
 
     const handleTypeSelect = (type: PublicationType) => {
         setPubType(type);
         if (type === 'TEXT') {
-            setStep('DETAILS'); // Texto salta directo a detalles
+            setStep('DETAILS');
         } else {
-            setStep('UPLOAD'); // Ilustración pide imagen
+            setStep('UPLOAD');
         }
     };
 
@@ -194,7 +213,6 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePos
 
                             <div className="divider"></div>
 
-                            {/* Clasificación (Obligatorio) */}
                             <div className="form-control">
                                 <h4 className="font-bold mb-3 flex items-center gap-2">
                                     Clasificación <span className="text-error">*</span>
@@ -205,9 +223,12 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit }: CreatePos
                                         <span className="font-bold">Todo Público</span>
                                     </label>
                                     <label className={`cursor-pointer border-2 rounded-lg p-3 flex items-center gap-3 ${contentRating === 'SENSITIVE' ? 'border-warning bg-warning/10' : 'border-base-200'}`}>
-                                        <input type="radio" name="rating" className="radio radio-warning" checked={contentRating === 'SENSITIVE'} onChange={() => setContentRating('SENSITIVE')} />
+                                        <input type="radio" name="rating" className="radio radio-warning" disabled={canExplicit == false} checked={contentRating === 'SENSITIVE'} onChange={() => setContentRating('SENSITIVE')} />
                                         <span className="font-bold">Sensible</span>
                                     </label>
+                                    {(canExplicit == false) && (
+                                        <span className="font-bold text-xs text-base-content/70">No puedes crear publicaciones explicitas debido a tu configuración actual.</span>
+                                    )}
                                 </div>
                             </div>
 

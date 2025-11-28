@@ -31,9 +31,7 @@ export default function Settings() {
     const loadUserProfile = async () => {
         try {
             setLoading(true);
-            // CORREGIDO: Usamos getById (que llama a /user/i/{id}) para obtener UserDetailsDto completo
-            // Esto asegura que recibamos email y showExplicit
-            const profile = await userService.getById(Number(userId));
+            const profile = await userService.getCurrent();
             
             setFormData({
                 displayName: profile.displayName || '',
@@ -55,12 +53,14 @@ export default function Settings() {
 
         try {
             await userService.update(Number(userId), {
+                displayName: formData.displayName,
+                username: formData.username,
                 email: formData.email,
                 description: formData.description,
                 showExplicit: formData.showExplicit
             });
             
-            updateSession({ userEmail: formData.email });
+            updateSession({ email: formData.email });
             
             setMessage({ type: 'success', text: 'Configuración guardada exitosamente' });
         } catch (error) {

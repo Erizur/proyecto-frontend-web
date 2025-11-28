@@ -2,7 +2,7 @@ import { useState, type SyntheticEvent } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
 import constants from "../../components/common/constants";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 
 export default function Register() {
     const [error, setError] = useState("");
