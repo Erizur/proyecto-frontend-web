@@ -41,7 +41,6 @@ apiClient.interceptors.response.use(
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return apiClient(originalRequest);
             } catch (refreshError) {
-                // ✅ CORRECCIÓN: Borrar TODA la sesión para evitar el bucle
                 localStorage.removeItem('token');
                 localStorage.removeItem('session'); 
                 localStorage.removeItem('expiresOn');

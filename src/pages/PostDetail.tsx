@@ -42,12 +42,18 @@ export default function PostDetail() {
             setLoading(true);
             const data = await publicationService.getById(Number(id));
             setPost(data);
-            setLikes(data.heartsCount);
-            setIsLiked(data.likedByMe);
-            setIsSaved(data.savedByMe);
+            
+            setLikes(data.heartsCount || 0);
+            setIsLiked(data.likedByMe ?? false);
+            setIsSaved(data.savedByMe ?? false);
+
             setError(null);
-        } catch (err) {
-            setError('Error al cargar la publicación');
+            if (data.moderated === true) {
+                setError("Esta publicación incumplio con las reglas de artpond y su visualización ha sido deshabilitada.");
+            }
+        } catch (err: any) {
+            console.error('Error fetching post:', err);
+            setError(err.response?.data?.message || 'Error al cargar la publicación');
         } finally {
             setLoading(false);
         }
@@ -56,9 +62,6 @@ export default function PostDetail() {
     const fetchComments = async () => {
         try {
             const data = await commentService.getByPublication(Number(id));
-            // Ordenamos por fecha (más recientes abajo, como chat, o arriba)
-            // Si el backend ya los ordena, genial. Si no:
-            // data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setComments(data);
         } catch (err) {
             console.error(err);
@@ -75,7 +78,7 @@ export default function PostDetail() {
             await publicationService.toggleHeart(post.id);
         } catch (error) {
             console.error(error);
-            setIsLiked(!newIsLiked); // Revertir
+            setIsLiked(!newIsLiked);
         }
     };
 
@@ -97,11 +100,9 @@ export default function PostDetail() {
         try {
             await commentService.create(Number(id), { text: newComment });
             setNewComment('');
-            // Recargar comentarios para asegurar consistencia con ID del servidor
             await fetchComments(); 
         } catch (err) {
             console.error('Error adding comment:', err);
-            // Podrías mostrar un toast de error aquí
         } finally {
             setSendingComment(false);
         }
@@ -111,7 +112,6 @@ export default function PostDetail() {
         if (!confirm("¿Borrar este comentario?")) return;
         try {
             await commentService.delete(Number(id), commentId);
-            // Actualización optimista en la UI
             setComments(prev => prev.filter(c => c.id !== commentId));
         } catch (error) {
             console.error(error);
@@ -189,7 +189,6 @@ export default function PostDetail() {
                         />
                     </div>
 
-                    {/* Panel de Comentarios */}
                     <div className="card bg-base-100 shadow-sm border border-base-300 rounded-md flex-1 flex flex-col max-h-[600px]">
                         <div className="p-4 border-b border-base-200 bg-base-100 rounded-t-md sticky top-0 z-10">
                             <h3 className="font-bold text-sm uppercase tracking-wide opacity-70">Comentarios ({comments.length})</h3>

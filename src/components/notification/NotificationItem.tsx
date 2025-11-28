@@ -8,8 +8,6 @@ interface NotificationItemProps {
 }
 
 export default function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
-    
-    // Helper para obtener configuración visual según el tipo
     const getConfig = (type: NotificationType, referenceId: number, actorUsername: string) => {
         switch (type) {
             case 'HEART_ON_POST':
@@ -64,8 +62,6 @@ export default function NotificationItem({ notification, onMarkAsRead }: Notific
         }
     };
 
-    // Obtenemos la config basada en los datos de la notificación
-    // Usamos optional chaining (?.) por si actor es null en notificaciones de sistema
     const config = getConfig(notification.type, notification.referenceId, notification.actor?.username);
 
     return (
@@ -75,12 +71,10 @@ export default function NotificationItem({ notification, onMarkAsRead }: Notific
             onClick={() => !notification.read && onMarkAsRead(notification.id)}
         >
             <div className="flex items-start gap-4">
-                {/* Icono de Tipo */}
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${config.bgColor}`}>
                     {config.icon}
                 </div>
 
-                {/* Avatar del Actor (solo si existe actor) */}
                 {notification.actor && (
                     <div className="shrink-0">
                         <UserAvatar 

@@ -17,9 +17,9 @@ interface PostCardProps {
 export default function PostCard({ post, onLike, onSave, onReport }: PostCardProps) {
     const navigate = useNavigate();
     
-    const [isLiked, setIsLiked] = useState(post.likedByMe); 
-    const [likes, setLikes] = useState(post.heartsCount);
-    const [isSaved, setIsSaved] = useState(post.savedByMe);
+    const [isLiked, setIsLiked] = useState(post.likedByMe ?? false); 
+    const [likes, setLikes] = useState(post.heartsCount || 0);
+    const [isSaved, setIsSaved] = useState(post.savedByMe ?? false);
 
     if (!post || !post.author) return null;
 

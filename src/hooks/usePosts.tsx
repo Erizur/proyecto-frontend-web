@@ -23,7 +23,6 @@ export function usePosts(options: UsePostsOptions = {}) {
     const currentPageRef = useRef(0);
 
     const fetchPosts = useCallback(async (pageNum: number, isNewFilter: boolean = false) => {
-        // Si necesitamos userId pero es null (ej. perfil no cargado), esperamos
         if (userId === null && !tagName && !onlySaved && !onlyFollowing) {
             setLoading(true);
             return;
@@ -43,18 +42,20 @@ export function usePosts(options: UsePostsOptions = {}) {
                 params.sort = [sort];
             }
 
-            // Lógica de selección de endpoint
             if (tagName) {
                 response = await publicationService.getByTag(tagName, params);
             } else if (onlySaved) {
-                // ✅ Lógica para Guardados
                 response = await userService.getSavedPosts(params);
             } else if (onlyFollowing) {
                 response = await publicationService.getFeed(params);
-            } else if (userId !== undefined) {
+            } else if (userId !== undefined && userId !== null) {
                 response = await publicationService.getByUserId(userId, params);
             } else {
                 response = await publicationService.getAll(params);
+            }
+
+            if (!response || !response.content) {
+                throw new Error('Respuesta inválida del servidor');
             }
 
             if (pageNum === 0 || isNewFilter) {

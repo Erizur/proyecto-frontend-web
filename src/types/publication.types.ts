@@ -33,12 +33,13 @@ export interface Publication {
 
     heartsCount: number;
     commentsCount: number;
-    likedByMe: boolean; 
-    savedByMe: boolean;
+    likedByMe?: boolean;
+    savedByMe?: boolean;
+    moderated?: boolean;
 
     contentWarning: boolean;
     machineGenerated: boolean;
-    manuallyVerified: boolean;
+    manuallyVerified?: boolean;
     creationDate: string;
     images: ImageResponse[];
     tags: Tag[];

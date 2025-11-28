@@ -17,6 +17,8 @@ import OAuth2Redirect from "./components/auth/OAuth2Redirect";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import ResetPassword from "./components/auth/ResetPassword";
 import MapPage from "./pages/MapPage";
+import NotFound from "./pages/NotFound";
+import Policy from "./pages/terms/Policy";
 
 function App() {
   return <>
@@ -29,7 +31,7 @@ function App() {
         </Route>
 
         <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
-
+      
         <Route element={<Layout />}>
             <Route path="/post/:id" element={<PostDetail />} />
             <Route path="/profile/:username" element={<Profile />} />
@@ -47,6 +49,11 @@ function App() {
             <Route path="/auth/logout" element={<Logout />}></Route>
           </Route>
         </Route>
+
+        
+        <Route path="/terms/policy" element={<Policy/>}/>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
   </>;

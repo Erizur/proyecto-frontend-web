@@ -2,6 +2,7 @@ import { useState, type SyntheticEvent } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
 import constants from "../../components/common/constants";
+import axios, { AxiosError } from "axios";
 
 export default function Register() {
     const [error, setError] = useState("");
@@ -20,10 +21,19 @@ export default function Register() {
         setLoading(true);
 
         try {
-            await auth.register(username, email, password);
-            navigate("/", { replace: true });
-        } catch (err: any) {
-            setError(err.message || "Error al registrarse");
+            await auth.register(username, email, password).then(() => { navigate("/", { replace: true }); });
+        } catch (err: unknown) {
+            if (err instanceof AxiosError) {
+                switch (err.response?.status) {
+                    case 400:
+                        setError("Revisa los campos del formulario e intenta de nuevo.");
+                        break;
+                    default:
+                        setError("Ocurrió un error en la red. Intenta de nuevo mas tarde.");
+                };
+            } else {
+                setError("Ocurrió un error inesperado al intentar registrarse. Intenta de nuevo mas tarde.");
+            }
         } finally {
             setLoading(false);
         }
@@ -111,7 +121,7 @@ export default function Register() {
                                 minLength={8}
                             />
                             <label className="label">
-                                <span className="label-text-alt opacity-60">Mínimo 8 caracteres</span>
+                                <span className="label-text-alt opacity-60">Mínimo 8 caracteres. <br/>Debe contener mayúsculas, minúsculas y números.</span>
                             </label>
                         </div>
 

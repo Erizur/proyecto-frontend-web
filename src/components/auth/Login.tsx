@@ -18,8 +18,7 @@ export default function Login() {
         setLoading(true);
 
         try {
-            await auth.login(username, password);
-            navigate("/", { replace: true });
+            await auth.login(username, password).then(() => { navigate("/", { replace: true }); });
         } catch (err: any) {
             if (err.response?.status === 401) {
                 setError("Usuario o contraseña incorrectos");

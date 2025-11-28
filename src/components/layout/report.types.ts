@@ -13,7 +13,6 @@ export interface CreateReportDto {
     details?: string;
 }
 
-// ==================== types/api.types.ts ====================
 export interface PageResponse<T> {
     content: T[];
     totalElements: number;
