@@ -19,8 +19,21 @@ import ResetPassword from "./components/auth/ResetPassword";
 import MapPage from "./pages/MapPage";
 import NotFound from "./pages/NotFound";
 import Policy from "./pages/terms/Policy";
+import Service from "./pages/terms/Service";
+import Rules from "./pages/terms/Rules";
+import { useState } from "react";
+import ReportModal from "./components/ReportModal";
 
 function App() {
+  // Estado global simple para el modal de reporte
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportTargetId, setReportTargetId] = useState<number | undefined>(undefined);
+
+  const handleOpenReport = (publicationId: number) => {
+      setReportTargetId(publicationId);
+      setReportModalOpen(true);
+  };
+
   return <>
     <AuthProvider>
       <Routes>
@@ -52,6 +65,8 @@ function App() {
 
         
         <Route path="/terms/policy" element={<Policy/>}/>
+        <Route path="/terms/service" element={<Service/>}/>
+        <Route path="/terms/rules" element={<Rules/>}/>
 
         <Route path="*" element={<NotFound />} />
       </Routes>
