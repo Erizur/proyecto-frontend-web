@@ -84,7 +84,6 @@ export default function PostCard({ post, onLike, onSave, onReport }: PostCardPro
                     </div>
                 </div>
 
-                {/* Contenido */}
                 <Link to={`/post/${post.id}`} className="block group">
                     {post.description && (
                         <p className="text-sm mb-3 whitespace-pre-wrap text-base-content group-hover:text-primary/90 transition-colors">
@@ -93,13 +92,26 @@ export default function PostCard({ post, onLike, onSave, onReport }: PostCardPro
                     )}
                     
                     {post.images && post.images.length > 0 && (
-                        <figure className="rounded-sm overflow-hidden mb-3 bg-base-200 border border-base-200">
-                            <img 
-                                src={post.images[0].url} 
-                                alt="Post content" 
-                                className="w-full h-auto max-h-[600px] object-contain bg-black/5"
-                                loading="lazy"
-                            />
+                        <figure className={`grid gap-1 rounded-sm overflow-hidden mb-3 bg-base-200 border border-base-200 ${
+                            post.images.length === 1 ? 'grid-cols-1' : 
+                            post.images.length === 2 ? 'grid-cols-2' : 
+                            'grid-cols-2'
+                        }`}>
+                            {post.images.slice(0, 4).map((img, index) => (
+                                <div key={img.id} className="relative aspect-square">
+                                    <img 
+                                        src={img.url} 
+                                        alt={`Post content ${index + 1}`} 
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                    />
+                                    {index === 3 && post.images.length > 4 && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl">
+                                            +{post.images.length - 4}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </figure>
                     )}
                 </Link>

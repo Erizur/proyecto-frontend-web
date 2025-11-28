@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { mapService, type PlaceData } from '../../api/map.service';
+import LoadingSpinner from './LoadingSpinner';
 
 interface LocationPickerProps {
     onSelect: (place: PlaceData | null) => void;
@@ -14,7 +15,7 @@ export default function LocationPicker({ onSelect, selectedPlace }: LocationPick
     
     const wrapperRef = useRef<HTMLDivElement>(null);
 
-    // Cierra el dropdown si clicamos fuera
+    // Cierra el menú si se hace clic fuera
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -25,7 +26,7 @@ export default function LocationPicker({ onSelect, selectedPlace }: LocationPick
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Debounce para búsqueda
+    // Búsqueda con debounce (espera a que el usuario deje de escribir)
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (query.length > 2) {
@@ -35,12 +36,16 @@ export default function LocationPicker({ onSelect, selectedPlace }: LocationPick
                     setResults(data);
                     setIsOpen(true);
                 } catch (error) {
-                    console.error(error);
+                    console.error("Error buscando lugares", error);
+                    setResults([]);
                 } finally {
                     setLoading(false);
                 }
+            } else {
+                setResults([]);
+                setIsOpen(false);
             }
-        }, 500);
+        }, 600); // 600ms de retraso
 
         return () => clearTimeout(timer);
     }, [query]);
@@ -56,66 +61,83 @@ export default function LocationPicker({ onSelect, selectedPlace }: LocationPick
         setQuery('');
     };
 
+    // Vista cuando ya hay un lugar seleccionado
     if (selectedPlace) {
         return (
-            <div className="flex items-center justify-between bg-primary/10 border border-primary/20 p-3 rounded-lg">
-                <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center shrink-0">
-                        📍
+            <div className="form-control w-full">
+                <label className="label">
+                    <span className="label-text font-bold">Ubicación</span>
+                </label>
+                <div className="flex items-center justify-between bg-primary/5 border border-primary/20 p-3 rounded-xl animate-in fade-in zoom-in duration-200">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="min-w-0">
+                            <div className="font-bold text-sm truncate">{selectedPlace.name}</div>
+                            <div className="text-xs opacity-60 truncate">{selectedPlace.address}</div>
+                        </div>
                     </div>
-                    <div className="truncate">
-                        <div className="font-bold text-sm truncate">{selectedPlace.name}</div>
-                        <div className="text-xs opacity-70 truncate">{selectedPlace.address}</div>
-                    </div>
+                    <button 
+                        onClick={handleClear} 
+                        className="btn btn-sm btn-ghost btn-circle text-error hover:bg-error/10"
+                        title="Quitar ubicación"
+                    >
+                        ✕
+                    </button>
                 </div>
-                <button onClick={handleClear} className="btn btn-xs btn-circle btn-ghost text-error">
-                    ✕
-                </button>
             </div>
         );
     }
 
+    // Vista de búsqueda
     return (
-        <div className="relative" ref={wrapperRef}>
+        <div className="form-control w-full relative" ref={wrapperRef}>
             <label className="label">
                 <span className="label-text font-bold flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Agregar Ubicación (Opcional)
+                    📍 Agregar Ubicación (Opcional)
                 </span>
             </label>
-            <input
-                type="text"
-                className="input input-bordered w-full focus:input-primary"
-                placeholder="Buscar lugar, ciudad o museo..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => query.length > 2 && setIsOpen(true)}
-            />
-            
-            {loading && (
-                <div className="absolute right-3 top-[3.2rem]">
-                    <span className="loading loading-spinner loading-xs text-primary"></span>
-                </div>
-            )}
+            <div className="relative">
+                <input
+                    type="text"
+                    className={`input input-bordered w-full pr-10 focus:input-primary transition-all ${isOpen ? 'rounded-b-none border-b-0' : ''}`}
+                    placeholder="Busca una ciudad, museo, parque..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => query.length > 2 && setResults.length > 0 && setIsOpen(true)}
+                />
+                {loading && (
+                    <div className="absolute right-3 top-3">
+                        <span className="loading loading-spinner loading-xs text-primary"></span>
+                    </div>
+                )}
+            </div>
 
-            {isOpen && results.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                    <ul className="menu menu-compact p-2">
-                        {results.map((place) => (
-                            <li key={place.osmId}>
-                                <button 
-                                    onClick={() => handleSelect(place)}
-                                    className="flex flex-col items-start py-2"
-                                >
-                                    <span className="font-bold text-sm">{place.name}</span>
-                                    <span className="text-xs opacity-60 truncate w-full">{place.address}</span>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
+            {/* Dropdown de resultados */}
+            {isOpen && (
+                <div className="absolute z-50 w-full bg-base-100 border border-base-300 border-t-0 rounded-b-xl shadow-xl max-h-60 overflow-y-auto no-scrollbar">
+                    {results.length > 0 ? (
+                        <ul className="menu menu-sm p-2 gap-1">
+                            {results.map((place) => (
+                                <li key={`${place.osmId}-${place.name}`}>
+                                    <button 
+                                        onClick={() => handleSelect(place)}
+                                        className="flex flex-col items-start py-3 px-4 hover:bg-base-200 rounded-lg transition-colors"
+                                    >
+                                        <span className="font-bold text-sm text-base-content">{place.name}</span>
+                                        <span className="text-xs text-base-content/50 truncate w-full text-left">{place.address}</span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="p-4 text-center text-sm opacity-50">
+                            {loading ? 'Buscando...' : 'No se encontraron lugares'}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
