@@ -27,6 +27,10 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')) {
+            return Promise.reject(error);
+        }
+
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             
@@ -44,8 +48,11 @@ apiClient.interceptors.response.use(
                 localStorage.removeItem('token');
                 localStorage.removeItem('session'); 
                 localStorage.removeItem('expiresOn');
+
+                if (!window.location.pathname.includes('/auth/login')) {
+                    window.location.href = '/auth/login';
+                }
                 
-                window.location.href = '/auth/login';
                 return Promise.reject(refreshError);
             }
         }
@@ -53,3 +60,4 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+;

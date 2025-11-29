@@ -26,7 +26,8 @@ export default function Register() {
             if (err instanceof AxiosError) {
                 switch (err.response?.status) {
                     case 400:
-                        setError("Revisa los campos del formulario e intenta de nuevo.");
+                        if (err.response?.data["validationErrors"] == null) setError(err.response?.data["message"]);
+                        else setError("Revisa los campos del formulario e intenta de nuevo.");
                         break;
                     default:
                         setError("Ocurrió un error en la red. Intenta de nuevo mas tarde.");

@@ -21,7 +21,7 @@ export interface IAuthContext {
     register: (u: string, e: string, p: string) => Promise<void>;
     login: (u: string, p: string) => Promise<void>;
     logout: () => void;
-    updateSession: (data: { username?: string, email?: string, profilePictureUrl?: string }) => void;
+    updateSession: (data: { username?: string, email?: string, profilePictureUrl?: string, role?: string }) => void;
     loginWithToken: (token: string) => void;
 }
 

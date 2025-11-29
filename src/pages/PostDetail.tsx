@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { publicationService } from '../api/publication.service';
 import { commentService } from '../api/comment.service';
 import { userService } from '../api/user.service';
@@ -14,21 +14,31 @@ import PostTags from '../components/post/PostTags';
 import UserAvatar from '../components/user/UserAvatar';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorMessage from '../components/common/ErrorMessage';
+import AppealModal from '../components/post/AppealModal';
+import EditPostModal from '../components/post/EditPostModal';
+import CommentItem from '../components/post/CommentItem';
+import ReportModal from '../components/ReportModal';
 
 export default function PostDetail() {
     const { id } = useParams<{ id: string }>();
     const { userId: currentUserId } = useAuth();
+    const navigate = useNavigate();
     
     const [post, setPost] = useState<Publication | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(true);
     const [sendingComment, setSendingComment] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<unknown>(null);
 
     const [likes, setLikes] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+
+    // Modals
+    const [showAppeal, setShowAppeal] = useState(false);
+    const [showEdit, setShowEdit] = useState(false);
+    const [showReport, setShowReport] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -46,14 +56,10 @@ export default function PostDetail() {
             setLikes(data.heartsCount || 0);
             setIsLiked(data.likedByMe ?? false);
             setIsSaved(data.savedByMe ?? false);
-
             setError(null);
-            if (data.moderated === true) {
-                setError("Esta publicación incumplio con las reglas de artpond y su visualización ha sido deshabilitada.");
-            }
         } catch (err: any) {
             console.error('Error fetching post:', err);
-            setError(err.response?.data?.message || 'Error al cargar la publicación');
+            setError(err);
         } finally {
             setLoading(false);
         }
@@ -94,11 +100,13 @@ export default function PostDetail() {
         }
     };
 
-    const handleAddComment = async () => {
-        if (!newComment.trim()) return;
+    const handleAddComment = async (parentId?: number, text?: string) => {
+        const content = text || newComment;
+        if (!content.trim()) return;
+        
         setSendingComment(true);
         try {
-            await commentService.create(Number(id), { text: newComment });
+            await commentService.create(Number(id), { text: content, parentId });
             setNewComment('');
             await fetchComments(); 
         } catch (err) {
@@ -112,24 +120,35 @@ export default function PostDetail() {
         if (!confirm("¿Borrar este comentario?")) return;
         try {
             await commentService.delete(Number(id), commentId);
-            setComments(prev => prev.filter(c => c.id !== commentId));
+            fetchComments(); // Recargar para limpiar anidados
         } catch (error) {
             console.error(error);
         }
     };
 
+    const handleDeletePost = async () => {
+        if(!post || !confirm("¿Estás seguro de eliminar esta publicación permanentemente?")) return;
+        try {
+            await publicationService.delete(post.id);
+            navigate('/');
+        } catch (error) {
+            alert("No se pudo eliminar");
+        }
+    };
+
     if (loading) return <LoadingSpinner />;
-    if (error) return <ErrorMessage message={error} onRetry={fetchPost} />;
+    if (error) return <ErrorMessage errorObject={error} onRetry={fetchPost} />;
     if (!post) return <ErrorMessage message="Publicación no encontrada" />;
 
     const authorName = getUserName(post.author);
+    const isOwner = currentUserId && Number(currentUserId) === post.author.userId;
 
     return (
         <div className="max-w-5xl mx-auto py-8 px-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 
                 <div className="md:col-span-7 lg:col-span-8">
-                    <div className="card bg-base-100 shadow-sm border border-base-300 rounded-md overflow-hidden">
+                    <div className="card bg-base-100 shadow-sm border border-base-300 rounded-md overflow-hidden relative group">
                         {post.images && post.images.length > 0 ? (
                             <div className="bg-base-200 flex items-center justify-center min-h-[300px]">
                                 <img 
@@ -145,27 +164,55 @@ export default function PostDetail() {
                                 </p>
                             </div>
                         )}
+                        
+                        <div className="absolute top-4 left-4 flex gap-2">
+                            {post.machineGenerated && <span className="badge badge-neutral bg-black/50 border-0 text-white backdrop-blur-md">Generado por IA</span>}
+                            {post.moderated && <span className="badge badge-error">Moderado</span>}
+                        </div>
                     </div>
                 </div>
 
                 <div className="md:col-span-5 lg:col-span-4 space-y-6">
                     <div className="card bg-base-100 shadow-sm border border-base-300 rounded-md p-5">
-                        <div className="flex items-center gap-4 mb-4">
-                            <UserAvatar 
-                                username={post.author.username}
-                                displayName={authorName}
-                                profilePictureUrl={post.author.profilePictureUrl}
-                                size="md"
-                            />
-                            <div>
-                                <Link to={`/profile/${post.author.username}`} className="font-bold hover:text-primary transition-colors">
-                                    {authorName}
-                                </Link>
-                                <div className="text-xs opacity-60 flex gap-2">
-                                    <span>@{post.author.username}</span>
-                                    <span>•</span>
-                                    <span>{new Date(post.creationDate).toLocaleDateString()}</span>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                                <UserAvatar 
+                                    username={post.author.username}
+                                    displayName={authorName}
+                                    profilePictureUrl={post.author.profilePictureUrl}
+                                    size="md"
+                                />
+                                <div>
+                                    <Link to={`/profile/${post.author.username}`} className="font-bold hover:text-primary transition-colors">
+                                        {authorName}
+                                    </Link>
+                                    <div className="text-xs opacity-60 flex gap-2">
+                                        <span>@{post.author.username}</span>
+                                        <span>•</span>
+                                        <span>{new Date(post.creationDate).toLocaleDateString()}</span>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div className="dropdown dropdown-end">
+                                <div tabIndex={0} role="button" className="btn btn-ghost btn-xs btn-square">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-5 h-5 stroke-current">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                    </svg>
+                                </div>
+                                <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-md z-[1] w-40 p-1 shadow-lg border border-base-200">
+                                    {isOwner ? (
+                                        <>
+                                            <li><button onClick={() => setShowEdit(true)}>Editar</button></li>
+                                            <li><button onClick={handleDeletePost} className="text-error">Eliminar</button></li>
+                                            {post.machineGenerated && (
+                                                <li><button onClick={() => setShowAppeal(true)} className="text-warning">Apelar IA</button></li>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <li><button onClick={() => setShowReport(true)} className="text-error">Reportar</button></li>
+                                    )}
+                                </ul>
                             </div>
                         </div>
 
@@ -174,6 +221,13 @@ export default function PostDetail() {
                         )}
 
                         <PostTags tags={post.tags} pubType={post.pubType} />
+
+                        {post.pubType !== 'TEXT' && !post.machineGenerated && (
+                            <div className="text-xs text-success flex items-center gap-1 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                Marcado como contenido humano
+                            </div>
+                        )}
 
                         <div className="divider my-2"></div>
 
@@ -194,7 +248,7 @@ export default function PostDetail() {
                             <h3 className="font-bold text-sm uppercase tracking-wide opacity-70">Comentarios ({comments.length})</h3>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-4">
                             {comments.length === 0 && (
                                 <div className="text-center py-10">
                                     <p className="text-sm opacity-50">Aún no hay comentarios.</p>
@@ -202,47 +256,15 @@ export default function PostDetail() {
                                 </div>
                             )}
                             
-                            {comments.map((comment) => {
-                                const commentAuthorName = getUserName(comment.author);
-                                const isOwner = Number(currentUserId) === comment.author.userId;
-
-                                return (
-                                    <div key={comment.id} className="flex gap-3 group animate-in fade-in duration-300">
-                                        <div className="shrink-0 mt-1">
-                                            <UserAvatar 
-                                                username={comment.author.username}
-                                                displayName={commentAuthorName}
-                                                profilePictureUrl={comment.author.profilePictureUrl}
-                                                size="xs"
-                                            />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="bg-base-200/60 p-3 rounded-2xl rounded-tl-none border border-transparent hover:border-base-300 transition-colors">
-                                                <div className="flex justify-between items-start">
-                                                    <Link to={`/profile/${comment.author.username}`} className="font-bold text-xs hover:underline text-base-content">
-                                                        {commentAuthorName}
-                                                    </Link>
-                                                    <span className="text-[10px] opacity-40">
-                                                        {new Date(comment.createdAt).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm mt-1 text-base-content/90 break-words">{comment.text}</p>
-                                            </div>
-                                            
-                                            <div className="flex gap-3 mt-1 ml-2 h-4">
-                                                {isOwner && (
-                                                    <button 
-                                                        onClick={() => handleDeleteComment(comment.id)}
-                                                        className="text-[10px] text-error hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        Eliminar
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {comments.map((comment) => (
+                                <CommentItem 
+                                    key={comment.id}
+                                    comment={comment}
+                                    currentUserId={currentUserId}
+                                    onDelete={handleDeleteComment}
+                                    onReply={(parentId, text) => handleAddComment(parentId, text)}
+                                />
+                            ))}
                         </div>
 
                         <div className="p-3 bg-base-100 border-t border-base-200 rounded-b-md">
@@ -259,7 +281,7 @@ export default function PostDetail() {
                                 />
                                 <button 
                                     className="btn btn-primary btn-sm join-item"
-                                    onClick={handleAddComment}
+                                    onClick={() => handleAddComment()}
                                     disabled={sendingComment || !newComment.trim()}
                                 >
                                     {sendingComment ? <span className="loading loading-xs"></span> : 'Enviar'}
@@ -269,6 +291,26 @@ export default function PostDetail() {
                     </div>
                 </div>
             </div>
+
+            {/* Modals */}
+            <AppealModal 
+                isOpen={showAppeal} 
+                onClose={() => setShowAppeal(false)} 
+                publicationId={post.id} 
+            />
+            
+            <EditPostModal 
+                isOpen={showEdit}
+                onClose={() => setShowEdit(false)}
+                post={post}
+                onSuccess={fetchPost}
+            />
+
+            <ReportModal
+                isOpen={showReport}
+                onClose={() => setShowReport(false)}
+                publicationId={post.id}
+            />
         </div>
     );
 }

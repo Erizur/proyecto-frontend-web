@@ -51,7 +51,6 @@ export default function PostCard({ post, onLike, onSave, onReport }: PostCardPro
     const authorName = getUserName(post.author);
 
     return (
-        // ✅ DISEÑO: rounded-md (sutil), border definido, shadow-sm
         <div className="card bg-base-100 shadow-sm border border-base-300 rounded-md hover:shadow-md transition-shadow duration-200">
             <div className="card-body p-4">
                 {/* Header */}
@@ -66,9 +65,29 @@ export default function PostCard({ post, onLike, onSave, onReport }: PostCardPro
                             <Link to={`/profile/${post.author.username}`} className="font-bold text-sm hover:underline leading-tight text-base-content">
                                 {authorName}
                             </Link>
-                            <p className="text-xs text-base-content/60">
-                                @{post.author.username} · {new Date(post.creationDate).toLocaleDateString()}
-                            </p>
+                            <div className="flex items-center gap-2 text-xs text-base-content/60">
+                                <span>@{post.author.username}</span>
+                                <span>·</span>
+                                <span>{new Date(post.creationDate).toLocaleDateString()}</span>
+                                
+                                {post.machineGenerated ? (
+                                    <span className="badge badge-xs badge-ghost text-[10px] gap-1" title="Contenido generado por IA">
+                                        Arte generado por IA
+                                    </span>
+                                ) : (
+                                    post.pubType !== 'TEXT' && (
+                                        <span className="badge badge-xs badge-success badge-outline text-[10px] gap-1" title="Contenido Humano">
+                                            Arte no generado
+                                        </span>
+                                    )
+                                )}
+                                
+                                {post.pubType !== 'TEXT' && !post.machineGenerated && !post.manuallyVerified && (
+                                    <div className="tooltip" data-tip="Pendiente de verificación del sistema">
+                                        <span className="text-warning cursor-help">(i)</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -86,7 +105,7 @@ export default function PostCard({ post, onLike, onSave, onReport }: PostCardPro
 
                 <Link to={`/post/${post.id}`} className="block group">
                     {post.description && (
-                        <p className="text-sm mb-3 whitespace-pre-wrap text-base-content group-hover:text-primary/90 transition-colors">
+                        <p className={`text-sm mb-3 whitespace-pre-wrap transition-colors ${post.machineGenerated ? 'text-base-content' : 'text-base-content font-medium'}`}>
                             {post.description}
                         </p>
                     )}
@@ -116,10 +135,8 @@ export default function PostCard({ post, onLike, onSave, onReport }: PostCardPro
                     )}
                 </Link>
 
-                {/* Tags */}
                 <PostTags tags={post.tags} pubType={post.pubType} />
 
-                {/* Acciones */}
                 <PostActions 
                     isLiked={isLiked}
                     isSaved={isSaved}

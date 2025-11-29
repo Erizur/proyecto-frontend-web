@@ -23,7 +23,7 @@ export default function Login() {
             if (err.response?.status === 401) {
                 setError("Usuario o contraseña incorrectos");
             } else {
-                setError(err.message || "Error al iniciar sesión");
+                setError(err.response?.data["message"] || "Error al iniciar sesión");
             }
         } finally {
             setLoading(false);
