@@ -1,4 +1,4 @@
-FROM node:20-alpine as builder
+FROM node:22-alpine as builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ ENV VITE_PUBLIC_API_URL=$VITE_PUBLIC_API_URL
 
 RUN npx vite build
 
-FROM node:20-alpine as runner
+FROM node:22-bookworm as runner
 
 RUN npm install -g serve
 
